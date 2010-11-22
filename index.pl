@@ -262,25 +262,19 @@ if ( $action eq "portfoliolist" ) {
     # check to see if user can see this
     #
     $template->param(PORTFOLIOS => 1);
-    my @uid;
-    eval {
-    	@uid = ExecSQL($dbuser, $dbpasswd, "select id from portfolio_users where username=?", $user);
-    };
     my @res;
     eval {
-    	@res = ExecSQL($dbuser, $dbpasswd, "select name from stock_holdings where userid=?", @uid[0]);
+    	@res = ExecSQL($dbuser, $dbpasswd, "select name from stock_holdings where userid='" . $user . "'");
     };
     my @loopdata;
-    foreach my $result (@res) {
+    while (@res) {
     	my %rowdata;
-    	
-        my ( $name ) = @{ $result };
-    	$rowdata{FOLIO_NAME} = $name;
-    	$rowdata{FOLIO_VALUE} = 0;
+    	$rowdata{FOLIO_NAME} = shift @res;
+    	$rowdata{FOLIO_VAL} = 0;
     	
     	push(loopdata, rowdata);
     }
-    $template->param(PORTFOLIO_LOOP => @loopdata);
+    $template->param(PORTFOLIO_LOOP => \@loopdata);
 }
 
 # WRITE

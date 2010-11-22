@@ -36,8 +36,8 @@
         	<h1><TMPL_VAR NAME="NAME">'s Portfolio</h1>
         	<div id="account">
         		<div id="acct-links">
-        			<p class="username">username</p>
-        			<p class="manage"><a href="settings.html">settings</a> | <a href="logout.pl">logout</a></p>
+        			<p class="username"><TMPL_VAR NAME="NAME"></p>
+        			<p class="manage"><a href="index.pl?act=logout">logout</a></p>
         		</div>
         		<img width="70" height="70" />
         	</div>
@@ -82,6 +82,7 @@
         	</div>
         </TMPL_IF>
         <TMPL_IF NAME="PORTFOLIOS">
+        	<p><a href="index.pl?act=portfolioadd"><img src="images/add.png" /> Add New Portfolio</a></p>
         	<dl id="portfoliolist">
         		<TMPL_LOOP NAME="PORTFOLIO_LOOP">
         		<dt><TMPL_VAR NAME="FOLIO_NAME"></dt>
