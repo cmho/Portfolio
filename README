@@ -1,0 +1,209 @@
+This directory contains a number of tools that may be helpful, or at least
+interesting, in implementing the data analysis/mining part of the project, and
+the trading strategy part of the project.
+
+To use any of the tools, you need to add this directory to your PATH:
+
+export PATH=$PATH:/path/to/this/directory
+
+
+Where is the stock data?
+------------------------
+
+The stock data is stored in a MySQL database.   To access it directly, do:
+
+mysql -u cs339 -p cs339
+[the password is cs339]
+
+You only have SELECT access to the database.  You cannot create/drop tables or insert/update/delete
+data in the existing tables.
+
+You will find a table called StocksDaily, which contains all of the recorded daily information.
+There are almost 3.5 million records in this table, so be careful with your queries!
+
+
+You will also find a table called Symbols, which contains a summary of information for each stock 
+symbol in the database.
+
+
+You can also access data from Perl using DBI.   The only difference from using Oracle is that you will 
+use this driver:
+
+my $dbh = DBI->connect("DBI:mysql:cs339:localhost", "cs339", "cs339")
+
+Of course, MySQL's SQL is a bit more limited than Oracle's.
+
+
+
+Tools for accessing the historical stock data
+---------------------------------------------
+
+The following tools will let you manipulate data from the commmand line.  You can generally 
+run these without arguments to get help.
+
+get_data.pl
+
+   This one lets you extract data for a symbol from the database.  
+   For example:
+
+      get_data.pl --close --from="1/1/99" --to="12/31/00" AAPL
+
+   will print two columns of data:  timestamps and the close prices for the stock AAPL (Apple Computer)
+   for the given two years.   If you add a --plot, you'll get a graphical view.
+
+get_info.pl
+
+   This one will give you summary statistics for a group of stocks.   For example:
+
+      get_info.pl --field=close --from="1/1/99" --to="12/31/00" AAPL IBM
+
+   will print statistics about the close prices for Apple and IBM for those years.
+
+get_random_symbol.pl
+
+   Picks a random symbol for you.   Useful when you're doing random samples to test
+   some trading strategy or predictor.
+
+
+get_symbols.pl
+
+   Gets all the available symbols.
+
+
+Tools for simple analysis
+-------------------------
+
+get_info.pl 
+   
+   Described above.
+
+get_covar.pl
+
+   This will compute the covariance or correlation of two or more stocks, giving you 
+   a covariance (or correlation) matrix.   You can use it to find out which stocks
+   tend to be correlated (or anti-correlated).    Two stocks that are correlated move together, 
+   which means if you invest in both of them, you get higher volatility.   Stocks
+   that are anti-correlated move in opposite directions, which means if you invest in both of
+   them, you'll get lower volatility.  
+
+   Example:
+
+     get_covar.pl --field1=close --field2=close --from="1/1/99" --to="12/31/00" AAPL IBM G
+
+   This will compute the covariance among the close prices of Apple, IBM, and GM over the
+   period in question.   Add a --corrcoeff to get correlation coeefficients. 
+
+   Note that this is an expensive tool since it needs to join the StocksDaily table with itself.
+
+
+
+Tools for predicton
+-------------------
+
+markov_symbol.pl
+  
+   This tool will attempt to predict future values of a stock based on past values
+   using a Markov model that's continually trained.
+
+   Example:
+
+     markov_symbol.pl AAPL 16 1
+
+   This will try to predict Apple's close prices from history using a 1st order Markov model.
+   Because Markov models are discrete (state machines) and this is continuous data, we must
+   choose how to discretize it.   The "16" indicates that we will use 16 levels. 
+
+stepify.pl
+   
+   Used by markov_symbol to discretize data
+
+eval_pred.pl
+
+   Used by markov_symbol to evaluate predictions
+
+markov_online.pl
+markov.pm
+  
+   This is the core of the Markov predictor
+
+
+
+genetic_symbol.pl
+
+   This tool will use genetic programming to try to evolve a predictor for the close 
+   prices of a given stock symbol.  This is an offline tool, in that what is returned
+   is the predictor, not the prediction.   
+
+   Example:
+
+     genetic_symbol.pl AAPL 10 
+
+   This tries to find the best program for looking at the last 10 Apple stock prices
+   and predicting the next stock price (close) from them.   What is printed
+   are the best programs of each generation.  The programming language is Lisp/Scheme-like.
+   Each program is also measured by its fitness (prediction error - lower is better)
+   and its structural complexity (lower is better).
+
+genetic_predictor_online
+pred.ini
+   
+   The genetic programming-based predictor and config files.
+
+time_series_symbol.pl
+
+   Evaluate a wide range of linear and nonlinear time series models for predicting 
+   close values of a stock symbol.   Run time_series_predictor_online to
+   see the list of models.   All models must be prefaced with "AWAIT" or 
+   "MANAGED" in order to work.
+
+   Example:
+     
+      time_series_symbol.pl AAPL 4 AWAIT 200 AR 16
+
+   Looks at the first 200 closing values of Apple, fits an AR(16) model to them,
+   and then uses that model to predict 4 days ahead for each following value.
+   The results are fed through an evaluation process, to result in a table
+   showing error levels for predictors for each of the 4.    Note: the
+   goal is to minimize the MeanSquareError with the model.
+
+time_series_symbol_project.pl
+
+   Similar to time_series_symbol.pl, but this one will simply present the
+   historic data followed by the predictions.
+
+
+time_series_evaluator_online
+time_series_predictor_offline
+time_series_predictor_online
+time_series_project
+
+    Used internally by time_series_symbol.pl, but you can run them too. 
+    In particular, time_series_predictor_online/offline can print the actual
+    predictions.
+ 
+
+Example Trading Strategy
+------------------------
+
+shannon_ratchet.pl
+    
+    This implements the "Shannon Ratchet" trading strategy invented
+    by Claude Shannon.  The Shannon Ratchet provides a positive rate of
+    return for any stock that is a geometric random walk.   In fact, the 
+    more volatile the stock, the greater the rate of return!!!  This kind of 
+    random walk is what would be expected were the Efficient Market Hypothesis 
+    true.  Shannon surprised people by finding a way to milk volatility.
+
+    The idea is really simple.  Every day, you rebalance your portfolio to be
+    50% in the stock, and 50% in cash.   That's it.  You'll see it is quite powerful,
+    even with real stock data.   It works less well if you have to pay to do trades :)
+
+
+    Example:
+
+        shannon_ratchet.pl AAPL 1000 20
+
+    This plays the Shannon Ratchet on Apple, starting with $1000 to invest, and
+    assuming a $20 trading cost.   The result will show both the return with
+    and without paying the trading cost.
+

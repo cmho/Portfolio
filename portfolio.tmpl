@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Portfolio | <tmpl_var name="title"></title>
+        <meta charset="utf-8">
+        <meta name="description" content="Stock portfolio manager">
+        <link rel="stylesheet" href="css/reset.css" type="text/css" media="screen">
+        <link rel="stylesheet" href="css/style.css" type="text/css" media="screen">
+        <link rel="stylesheet" href="css/queries/netbooks-tablets.css" type="text/css" media="screen and (max-width: 1007px)" />
+            
+        <script type="text/javascript" src="js/html5.js"></script>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+            
+        <!--[if IE 7]><link rel="stylesheet" href="css/ie/ie7.css" type="text/css" media="screen"><![endif]-->
+        <!--[if lt IE 7]><link rel="stylesheet" href="css/ie/ie6.css" type="text/css" media="screen"><![endif]-->
+    </head>
+    <body>
+    <TMPL_IF NAME="LOGINSCREEN">
+    	<div id="login">
+    		<h1>Portfolio</h1>
+    		<form id="loginform" action="" method="POST">
+    			<TMPL_IF NAME="LOGINFAILED">
+    				<p class="notify">Login failed.</p>
+    			</TMPL_IF>
+    			<label for="user">Username</label><input type="text" name="user" /><br />
+    			<label for="password">Password</label><input type="password" name="password" /><br />
+    			<input type="hidden" name="act" value="login" /><input type="hidden" name="loginrun" value="1" />
+    			<input type="submit" value="submit" /> <a href="register.html">Need an account?</a>
+    			<div style="clear:both"></div>
+    		</form>
+    		
+    		<p align="center"><a href="hiprof.html">IF YOU'RE PROFESSOR DINDA CLICK HERE</a></p>
+    	</div>
+    <TMPL_ELSE>
+        <div id="header">
+        	<h1><TMPL_VAR NAME="NAME">'s Portfolio</h1>
+        	<div id="account">
+        		<div id="acct-links">
+        			<p class="username">username</p>
+        			<p class="manage"><a href="settings.html">settings</a> | <a href="logout.pl">logout</a></p>
+        		</div>
+        		<img width="70" height="70" />
+        	</div>
+        	<div style="clear: both"></div>
+        </div>
+        <ul id="navbar">
+        	<li><a href="#">Overview</a></li>
+        	<li><a href="index.pl?act=browse">Browse Stocks</a></li>
+        	<li><a href="index.pl?act=portfoliolist">Portfolios</a>
+        		<ul>
+        			<li><a href="index.pl?act=portfolioview&folio=id">Portfolio1</a></li>
+        			<li><a href="#">Create New</a></li>
+        		</ul></li>
+        	<li><a href="#">Trends</a></li>
+        	<li><a href="#">Strategies</a></li>
+        </ul>
+        <div id="contentpane">
+        <TMPL_IF NAME="JUSTLOGGEDIN">
+        	<div id="quicklook">
+        		<h2>Quick Look</h2>
+        		<dl>
+        			<dt>MSFT
+        			<dd class="down">↓144
+        			<dt>APPL
+        			<dd class="up">↑500
+        		</dl>
+        		<div style="clear: both"></div>
+        		<p><a href="#">See more symbol listings &raquo;</a><p>
+        	</div>
+        	<div id="hello">
+        		<p class="welcome">Hello, <TMPL_VAR NAME="NAME"></p>
+        		<div class="notice">
+        			<div class="marker"><img src="images/error.png" /></div>
+        			<p>You have new messages.</p>
+        		</div>
+        		<p>It seems there are things that you haven't done yet!</p>
+        		<ul>
+        			<li>Buy stocks</li>
+        			<li>View your strategies</li>
+        			<li>Recent trends</li>
+        		</ul>
+        	</div>
+        </TMPL_IF>
+        <TMPL_IF NAME="PORTFOLIOS">
+        	<dl id="portfoliolist">
+        		<TMPL_LOOP NAME="PORTFOLIO_LOOP">
+        		<dt><TMPL_VAR NAME="FOLIO_NAME"></dt>
+        		<dd><TMPL_VAR NAME="FOLIO_VAL"></dd>
+        		</TMPL_LOOP>
+        	</dl>
+        </TMPL_IF>
+        </div>
+        <div style="clear: both"></div>
+        <div id="footer">
+        	Created by C. Brown and C. Ho, 2010
+        </div>
+    </TMPL_IF>
+    </body>
+</html>
