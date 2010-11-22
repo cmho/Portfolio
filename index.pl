@@ -266,15 +266,6 @@ if ( $action eq "portfoliolist" ) {
     eval {
     	@res = ExecSQL($dbuser, $dbpasswd, "select name from stock_holdings where userid='" . $user . "'");
     };
-    my @loopdata;
-    while (@res) {
-    	my %rowdata;
-    	$rowdata{FOLIO_NAME} = shift @res;
-    	$rowdata{FOLIO_VAL} = 0;
-    	
-    	push(loopdata, rowdata);
-    }
-    $template->param(PORTFOLIO_LOOP => \@loopdata);
 }
 
 # WRITE

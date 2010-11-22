@@ -84,10 +84,7 @@
         <TMPL_IF NAME="PORTFOLIOS">
         	<p><a href="index.pl?act=portfolioadd"><img src="images/add.png" /> Add New Portfolio</a></p>
         	<dl id="portfoliolist">
-        		<TMPL_LOOP NAME="PORTFOLIO_LOOP">
-        		<dt><TMPL_VAR NAME="FOLIO_NAME"></dt>
-        		<dd><TMPL_VAR NAME="FOLIO_VAL"></dd>
-        		</TMPL_LOOP>
+        	<TMPL_VAR NAME="PORTFOLIO_LOOP">
         	</dl>
         </TMPL_IF>
         </div>
