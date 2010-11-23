@@ -258,6 +258,18 @@ if ( $action eq "overview" ) {
 	$template->param(NAME => $user);
     $template->param(TITLE => "Overview");
 }
+if ( $action eq "portfolioadd" ) {
+	$template->param(PORTFOLIO_ADD => 1);
+	$template->param(TITLE => "Add New Portfolio");
+	my @res;
+	if (param("createrun")) {
+		my $name = param("name");
+		my $acct = param("cash");
+		eval {
+			@res = ExecSQL($dbuser, $dbpasswd, "insert into stock_holdings(name, cashacct) values(" . $name . ", " . $cash . ")");
+		};
+	}
+}
 if ( $action eq "portfoliolist" ) {
     #
     # check to see if user can see this

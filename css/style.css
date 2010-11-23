@@ -296,16 +296,19 @@ Login Page
 	text-align: center;
 }
 
-#login form label {
+form label {
 	display: inline-block;
 	width: 150px;
 	font-size: 1.25em;
-	text-align: right;
 	margin-right: 20px;
 	font-weight: 700;
 }
 
-#login form input[type="text"], #login form input[type="password"] {
+#login form label {
+	text-align: right;
+}
+
+form input[type="text"], #login form input[type="password"] {
 	border-radius: 3px;
 	border: 1px #BBB solid;
 	width: 200px;
@@ -315,7 +318,7 @@ Login Page
 	font-weight: 300;
 }
 
-#login form .notify {
+form .notify {
 	font-size: 1em;
 	text-align: left;
 	background-color: #FCC;
@@ -324,7 +327,7 @@ Login Page
 	padding: 2px 5px;
 }
 
-#login form input[type="submit"] {
+form input[type="submit"] {
 	line-height: 1;
     text-decoration:none;
     display: inline-block;
@@ -342,12 +345,12 @@ Login Page
 	background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#88c058), to(#66a037));
 }
 
-#login form input[type="submit"]:hover {
+form input[type="submit"]:hover {
 	background-image: -moz-linear-gradient(100% 100% 90deg, #296716, #419a23);
 	background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#419a23), to(#296716));
 }
 
-#login form input[type="submit"]:active {
+form input[type="submit"]:active {
 	position: relative;
 	top: 1px;
 }
