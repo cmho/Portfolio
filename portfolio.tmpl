@@ -44,12 +44,12 @@
         	<div style="clear: both"></div>
         </div>
         <ul id="navbar">
-        	<li><a href="#">Overview</a></li>
+        	<li><a href="index.pl?act=overview">Overview</a></li>
         	<li><a href="index.pl?act=browse">Browse Stocks</a></li>
         	<li><a href="index.pl?act=portfoliolist">Portfolios</a>
         		<ul>
         			<li><a href="index.pl?act=portfolioview&folio=id">Portfolio1</a></li>
-        			<li><a href="#">Create New</a></li>
+        			<li><a href="index.pl?act=newfolio">Create New</a></li>
         		</ul></li>
         	<li><a href="#">Trends</a></li>
         	<li><a href="#">Strategies</a></li>
@@ -86,6 +86,25 @@
         	<dl id="portfoliolist">
         	<TMPL_VAR NAME="PORTFOLIO_LOOP">
         	</dl>
+        </TMPL_IF>
+        <TMPL_IF NAME="BROWSE">
+        	<TMPL_IF NAME="STOCK">
+        		<div id="stockinfo">
+        			<h2><TMPL_VAR NAME="STOCK_SHORT">: <TMPL_VAR NAME="STOCKNAME"></h2>
+        			<dl id="attr">
+        				<dt>Last Closing Price</dt>
+        				<dd>0</dd>
+        				<dt>Last Opening Price</dt>
+        				<dd>0</dd>
+        				<dt>Highest Price</dt>
+        				<dd>0</dd>
+        				<dt>Lowest Price</dt>
+        				<dd>0</dd>
+        			</dl>
+        		</div>
+        	<TMPL_ELSE>
+        		<TMPL_VAR NAME="BROWSE_OUT">
+        	</TMPL_IF>
         </TMPL_IF>
         </div>
         <div style="clear: both"></div>

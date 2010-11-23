@@ -256,378 +256,67 @@ if ( $action eq "logout" ) {
 if ( $action eq "overview" ) {
 	$template->param(JUSTLOGGEDIN => 1);
 	$template->param(NAME => $user);
+    $template->param(TITLE => "Overview");
 }
 if ( $action eq "portfoliolist" ) {
     #
     # check to see if user can see this
     #
     $template->param(PORTFOLIOS => 1);
+    $template->param(TITLE => "Your Portfolios");
     my @res;
-    eval {
-    	@res = ExecSQL($dbuser, $dbpasswd, "select name from stock_holdings where userid='" . $user . "'");
-    };
-}
-
-# WRITE
-#
-# Write is a "normal" form.
-#
-#
-if ( $action eq "write" ) {
-
-    #
-    # check to see if user can see this
-    #
-    if ( !UserCan( $user, "write-messages" ) ) {
-        print h2('You do not have the required permissions to write messages.');
-    }
-    else {
-
-        #
-        # Generate the form.
-        # Your reply functionality will be similar to this
-        #
-        print start_form( -name => 'Write' ),
-          h2('Make blog entry'), "Subject:", textfield( -name => 'subject' ),
-          p("Upload image:"), p filefield('imgupload', '', 50, 80),
-          p
-          textarea(
-            -name    => 'post',
-            -default => 'Write your post here.',
-            -rows    => 16,
-            -columns => 80
-          ),
-          hidden( -name => 'postrun', -default => ['1'] ),
-          hidden( -name => 'act',     -default => ['write'] ), p submit,
-          end_form,
-          hr;
-
-        #
-        # If we're being invoked with parameters, then
-        # do the actual posting.
-        #
-        if ( param('postrun') ) {
-        	
-        	my $filename ;
-	    	if (param('imgupload')) {
-	    		my $filechars = "a-zA-Z0-9_.-";
-				my $filedir = "/home/cmh736/public_html/microblog/uploads/";
-				
-				my $q = new CGI;
-				$filename = $q->param('imgupload');
-				
-				if ($filename) {
-					my ( $name, $path, $extension ) = fileparse( $filename, '\..*' );  
-					$filename = $name . $extension;
-					
-					$filename =~ tr/ /_/;  
-					$filename =~ s/[^$filechars]//g;
-					
-					if ( $filename =~ /^([$filechars]+)$/ ) {  
-						$filename = $1;  
-					} else {  
-						die "Filename contains invalid characters";  
-					}
-					
-					my $fh = $q->upload('imgupload');
-					
-					open ( UPLOADFILE, ">$filedir/$filename" ) or die "$!";  
-					binmode UPLOADFILE;  
-					 
-					while ( <$fh> ) {  
-						print UPLOADFILE;  
-					}  
-					 
-					close UPLOADFILE;
-				}
-	    	}
-        	
-            my $by      = $user;
-            my $text    = param('post');
-            my $subject = param('subject');
-            my $img 	= param('imgupload');
-            my $error   = Post( 0, $by, $subject, $text, $img );
-            if ($error) {
-                print "Can't post message because: $error";
-            }
-            else {
-                print "Posted the following on $subject from $by:<p>$text";
-            }
-        }
+    if (param("folio")) {
+    	eval {
+    		@res = ExecSQL($dbuser, $dbpasswd, "select * from stock_holdings where name=?", param("folio"));
+    	};
+    } else {
+    	eval {
+    		@res = ExecSQL($dbuser, $dbpasswd, "select name from stock_holdings where userid='" . $user . "'");
+    	};
     }
 }
-if ( $action eq "reply" ) {
-	my $id = param('id');
-    #
-    # check to see if user can see this
-    #
-    if ( !UserCan( $user, "write-messages" ) ) {
-        print h2('You do not have the required permissions to write messages.');
-    }
-    else {
-
-        #
-        # Generate the form.
-        # Your reply functionality will be similar to this
-        #
-        print start_form( -name => 'reply' ),
-          h2('Post Reply:'), "Subject:", textfield( -name => 'subject' ),
-          p("Upload image:"), p filefield('imgupload', '', 50, 80),
-          p textarea(
-            -name    => 'post',
-            -default => 'Write your reply here.',
-            -rows    => 16,
-            -columns => 80
-          ),
-          hidden( -name => 'respid',  -default => $id ),
-          hidden( -name => 'postrun', -default => ['1'] ),
-          hidden( -name => 'act',     -default => ['reply'] ), p submit,
-          end_form,
-          hr;
-
-        #
-        # If we're being invoked with parameters, then
-        # do the actual posting.
-        #
-        if ( param('postrun') ) {
-        
-        	        	my $filename ;
-	    	if (param('imgupload')) {
-	    		my $filechars = "a-zA-Z0-9_.-";
-				my $filedir = "/home/cmh736/public_html/microblog/uploads/";
-				
-				my $q = new CGI;
-				$filename = $q->param('imgupload');
-				
-				if ($filename) {
-					my ( $name, $path, $extension ) = fileparse( $filename, '\..*' );  
-					$filename = $name . $extension;
-					
-					$filename =~ tr/ /_/;  
-					$filename =~ s/[^$filechars]//g;
-					
-					if ( $filename =~ /^([$filechars]+)$/ ) {  
-						$filename = $1;  
-					} else {  
-						die "Filename contains invalid characters";  
-					}
-					
-					my $fh = $q->upload('imgupload');
-					
-					open ( UPLOADFILE, ">$filedir/$filename" ) or die "$!";  
-					binmode UPLOADFILE;  
-					 
-					while ( <$fh> ) {  
-						print UPLOADFILE;  
-					}  
-					 
-					close UPLOADFILE;
-				}
-	    	}
-        	
-            my $by      = $user;
-            my $respid	= param('respid');
-            my $text    = param('post');
-            my $subject = param('subject');
-            my $img		= param('imgupload');
-            my ($out, $error) = Post( $respid, $by, $subject, $text, $img );
-            if ($error) {
-                print "Can't post message because: $error";
-            }
-            else {
-                print "Posted the following on $subject from $by:<p>$text";
-            }
-        }
-    }
-}
-if ( $action eq "view" ) {
-	my $id = param('id');
-	my ($out, $error) = ViewMessage($id);
-	if ($error) {
-		print "Can't view message because: $error";
+if ( $action eq "browse" ) {
+	$template->param(TITLE => "Browse Stocks");
+	$template->param(BROWSE => 1);
+	my @res;
+	my $out = "";
+	if (param("stock")) {
+		$template->param(STOCK => param("stock"));
+		eval {
+			@res = ExecSQL($dbuser, $dbpasswd, "select * from symbols where shortname=?", param("stock"));
+		};
+		my @values = ();
+		foreach my $result (@res) {
+			my ( $id, $stockname, $stockshort, $stockcur, $stockold ) = @${$result};
+			$template->param(STOCKNAME => $stockname);
+			$template->param(STOCK_SHORT => $stockshort);
+			$template->param(STOCK_CURRENT => $stockcur);
+			@values = deserialize($stockold);
+		}
+		
+	} else {
+		$out .= "<dl>\n\t";
+		eval {
+			@res = ExecSQL($dbuser, $dbpasswd, "select shortname, longname, val from symbols order by shortname");
+		};
+		foreach my $result (@res) {
+			my ( $shortname, $longname, $val ) = @${$result};
+			$out .= "\t<dt><a href=\"index.pl?act=browse&stock=" . $shortname . "\">" . $longname . "(" . $shortname . ")</a></dt>\n";
+			$out .= "\t<dd>" . $val . "</dd>\n";
+		}
+		$out .= "</dl>";
 	}
-	else {
-		print $out;
-	}
+	$template->param(BROWSE_OUT => $out);
+}
+if ( $action eq "cash" ) {
+	$template->param(TITLE => "Your Cash Accounts");
+	$template->param(CASH => 1);
+}
+if ( $action eq "strategies" ) {
+	$template->param(TITLE => "Your Strategies");
+	$template->param()
 }
 
-# USERS
-#
-# Adding and deleting users is a couple of normal forms
-#
-#
-if ( $action eq "users" ) {
-
-    #
-    # check to see if user can see this
-    #
-    if ( !UserCan( $user, "manage-users" ) ) {
-        print h2('You do not have the required permissions to manage users.');
-    }
-    else {
-
-        #
-        # Generate the add form.
-        #
-        print start_form( -name => 'AddUser' ),
-          h2('Add User'),
-          "Name: ", textfield( -name => 'name' ),
-          p,
-          "Email: ", textfield( -name => 'email' ),
-          p,
-          "Password: ", textfield( -name => 'password' ),
-          p,
-          hidden( -name => 'adduserrun', -default => ['1'] ),
-          hidden( -name => 'act',        -default => ['users'] ),
-          submit,
-          end_form,
-          hr;
-
-        #
-        # Generate the givepermform.
-        #
-        print start_form( -name => 'GivePermission' ),
-          h2('Give Permission'),
-          "Name: ", textfield( -name => 'name' ),
-          p,
-          "Action: ", textfield( -name => 'perm' ),
-          hidden( -name => 'givepermrun', -default => ['1'] ),
-          hidden( -name => 'act', -default => ['users'] ), p,
-          submit,
-          end_form,
-          hr;
-
-        #
-        # Generate the revokepermform.
-        #
-        print start_form( -name => 'RevokePermission' ),
-          h2('Revoke Permission'),
-          "Name: ", textfield( -name => 'name' ),
-          p,
-          "Action: ", textfield( -name => 'perm' ),
-          hidden( -name => 'revokepermrun', -default => ['1'] ),
-          hidden( -name => 'act', -default => ['users'] ), p,
-          submit,
-          end_form,
-          hr;
-
-        #
-        # Generate the deleteform.
-        # Your delete message functionality may be similar to this
-        #
-        print start_form( -name => 'DeleteUser' ),
-          h2('Delete User'),
-          "Name: ", textfield( -name => 'name' ),
-          p,
-          hidden( -name => 'deluserrun', -default => ['1'] ),
-          hidden( -name => 'act',        -default => ['users'] ),
-          submit,
-          end_form,
-          hr;
-
-        #
-        # Run the user add
-        #
-        if ( param('adduserrun') ) {
-            my $name     = param('name');
-            my $email    = param('email');
-            my $password = param('password');
-            my $error;
-            $error = UserAdd( $name, $password, $email );
-            if ($error) {
-                print "Can't add user because: $error";
-            }
-            else {
-                print "Added user $name $email\n";
-            }
-        }
-
-        #
-        # Run the user delete
-        #
-        if ( param('deluserrun') ) {
-            my $name  = param('name');
-            my $error = UserDel($name);
-            if ($error) {
-                print "Can't delete user because: $error";
-            }
-            else {
-                print "User $name deleted.";
-            }
-        }
-
-        #
-        # Run givepermission
-        #
-        if ( param('givepermrun') ) {
-            my $name  = param('name');
-            my $perm  = param('perm');
-            my $error = GiveUserPerm( $name, $perm );
-            if ($error) {
-                print "Can't give $name permission $perm because: $error";
-            }
-            else {
-                print "User $name given permission $perm.";
-            }
-        }
-
-        #
-        # Run givepermission
-        #
-        if ( param('revokepermrun') ) {
-            my $name  = param('name');
-            my $perm  = param('perm');
-            my $error = RevokeUserPerm( $name, $perm );
-            if ($error) {
-                print "Can't revoke $name permission $perm because: $error";
-            }
-            else {
-                print "User $name has had permission $perm revoked.";
-            }
-        }
-
-        #
-        # Print tables users Permissions
-        #
-        my ( $table, $error );
-        ( $table, $error ) = PermTable();
-        if ($error) {
-            print "Can't display permissions table because: $error";
-        }
-        else {
-            print "<h2>Available Permissions</h2>$table";
-        }
-        ( $table, $error ) = UserTable();
-        if ($error) {
-            print "Can't display user table because: $error";
-        }
-        else {
-            print "<h2>Registered Users</h2>$table";
-        }
-        ( $table, $error ) = UserPermTable();
-        if ($error) {
-            print "Can't display user permission table because: $error";
-        }
-        else {
-            print "<h2>Users and their permissions</h2>$table";
-        }
-    }
-}
-if ( $action eq "delete" ) {
-	if ( !UserCan( $user, "delete-any-messages" ) ) {
-        print h2('You do not have the required permissions to delete this post.');
-    }
-    else {
-    	if ( param('id') ) {
-    		my $id = param('id');
-    		my ($out, $error) = DeleteMessage($id);
-    		print $out;
-    	}
-    	else {
-    		print h2('No post specified for deletion.');
-    	}
-    }
-}
 #
 # Generate debugging output if anything is enabled.
 #
