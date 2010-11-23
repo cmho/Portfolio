@@ -9,7 +9,12 @@
         <link rel="stylesheet" href="css/queries/netbooks-tablets.css" type="text/css" media="screen and (max-width: 1007px)" />
             
         <script type="text/javascript" src="js/html5.js"></script>
-        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script>
+        <script type="text/javascript" src="js/jquery.valid8.js"></script>
+        <script>
+        	$('#portfolioname').valid8('A name is required.');
+        	$('#cashacct').valid8('A portfolio must be attached to a cash account.');
+        </script>
             
         <!--[if IE 7]><link rel="stylesheet" href="css/ie/ie7.css" type="text/css" media="screen"><![endif]-->
         <!--[if lt IE 7]><link rel="stylesheet" href="css/ie/ie6.css" type="text/css" media="screen"><![endif]-->
@@ -109,13 +114,13 @@
         <TMPL_IF NAME="PORTFOLIO_ADD">
         	<h2>Add New Portfolio</h2>
         	<form id="addfolio">
-        		<label for="name">Name</label><input type="text" name="name" /><br />
-        		<label for="cash">Cash Account</label><select name="cash">
+        		<label for="name">Name</label><input type="text" name="name" id="portfolioname" /><br />
+        		<label for="cash">Cash Account</label><select name="cash" id="cashacct">
         												<option value="$id">$name</option>
         											  </select><br />
         		<input type="hidden" name="act" value="addportfolio" />
         		<input type="hidden" name="createrun" value="1" />
-        		<input type="submit" />
+        		<input type="submit" disabled="true" />
         	</form>
         </TMPL_IF>
         </div>
