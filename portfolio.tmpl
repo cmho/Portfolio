@@ -21,21 +21,40 @@
     </head>
     <body>
     <TMPL_IF NAME="LOGINSCREEN">
-    	<div id="login">
-    		<h1>Portfolio</h1>
-    		<form id="loginform" action="" method="POST">
-    			<TMPL_IF NAME="LOGINFAILED">
-    				<p class="notify">Login failed.</p>
-    			</TMPL_IF>
-    			<label for="user">Username</label><input type="text" name="user" /><br />
-    			<label for="password">Password</label><input type="password" name="password" /><br />
-    			<input type="hidden" name="act" value="login" /><input type="hidden" name="loginrun" value="1" />
-    			<input type="submit" value="submit" /> <a href="register.html">Need an account?</a>
-    			<div style="clear:both"></div>
-    		</form>
-    		
-    		<p align="center"><a href="hiprof.html">IF YOU'RE PROFESSOR DINDA CLICK HERE</a></p>
-    	</div>
+    	<TMPL_IF NAME="REGISTERSCREEN">
+    		<div id="login">
+    			<h1>Portfolio : Register</h1>
+    			<form id="regform" action="" method="POST">
+    			    <TMPL_IF NAME="REGFAILED">
+    			    	<p class="notify">Registration failed.</p>
+    			    </TMPL_IF>
+    			    <label for="firstname">First Name</label><input type="text" name="firstname" /><br />
+    			    <label for="lastname">Last Name</label><input type="text" name="lastname" /><br />
+    			    <label for="email">E-mail</label><input type="text" name="email" /><br />
+    			    <label for="username">Username</label><input type="text" name="username" /><br />
+    			    <label for="password">Password</label><input type="password" name="password" /><br />
+    			    <input type="hidden" name="act" value="register" /><input type="hidden" name="adduserrun" value="1" />
+    			    <input type="submit" value="submit" />
+    			    <div style="clear:both"></div>
+    			</form>
+    		</div>
+    	<TMPL_ELSE>
+    		<div id="login">
+    			<h1>Portfolio</h1>
+    			<form id="loginform" action="" method="POST">
+    				<TMPL_IF NAME="LOGINFAILED">
+    					<p class="notify">Login failed.</p>
+    				</TMPL_IF>
+    				<label for="user">Username</label><input type="text" name="user" /><br />
+    				<label for="password">Password</label><input type="password" name="password" /><br />
+    				<input type="hidden" name="act" value="login" /><input type="hidden" name="loginrun" value="1" />
+    				<input type="submit" value="submit" /> <a href="index.pl?act=register">Need an account?</a>
+    				<div style="clear:both"></div>
+    			</form>
+    			
+    			<p align="center"><a href="hiprof.html">IF YOU'RE PROFESSOR DINDA CLICK HERE</a></p>
+    		</div>
+    	</TMPL_IF>
     <TMPL_ELSE>
         <div id="header">
         	<h1><TMPL_VAR NAME="NAME">'s Portfolio</h1>
@@ -53,8 +72,11 @@
         	<li><a href="index.pl?act=browse">Browse Stocks</a></li>
         	<li><a href="index.pl?act=portfoliolist">Portfolios</a>
         		<ul>
-        			<li><a href="index.pl?act=portfolioview&folio=id">Portfolio1</a></li>
-        			<li><a href="index.pl?act=newfolio">Create New</a></li>
+        			<li><a href="index.pl?act=portfolioadd">Create New</a></li>
+        		</ul></li>
+        	<li><a href="index.pl?act=cash">Cash Accounts</a>
+        		<ul>
+        			<li><a href="index.pl?act=cashacctadd">Add Cash Account</a></li>
         		</ul></li>
         	<li><a href="#">Trends</a></li>
         	<li><a href="#">Strategies</a></li>
@@ -89,7 +111,13 @@
         <TMPL_IF NAME="PORTFOLIOS">
         	<p><a href="index.pl?act=portfolioadd"><img src="images/add.png" /> Add New Portfolio</a></p>
         	<dl id="portfoliolist">
-        	<TMPL_VAR NAME="PORTFOLIO_LOOP">
+        	<TMPL_VAR NAME="PORTFOLIO_LISTING">
+        	</dl>
+        </TMPL_IF>
+        <TMPL_IF NAME="CASH">
+        	<p><a href="index.pl?act=cashadd"><img src="images/add.png" /> Add New Cash Account</a></p>
+        	<dl id="cashacctlist">
+        	<TMPL_VAR name="CASHLIST_OUT">
         	</dl>
         </TMPL_IF>
         <TMPL_IF NAME="BROWSE">

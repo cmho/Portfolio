@@ -10,7 +10,7 @@ my $host = "localhost";
 my $dbh = DBI->connect("dbi:mysql:database=cs339;host=$host", $user, $password)
 	or die $DBI::errstr;
 
-my $query = $dbh->prepare("select symbol from StocksDaily")
+my $query = $dbh->prepare("select distinct symbol from StocksDaily")
 	or die $DBI::errstr;
 	
 $query->execute();

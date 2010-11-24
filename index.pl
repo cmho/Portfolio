@@ -142,10 +142,10 @@ if ( $action eq "login" || param('loginrun') ) {
             # don't give him a cookie
             $logincomplain = 1;
             $action        = "login";
+            $template->param(LOGINSCREEN => 1);
         }
     }
     else {
-
         #
         # Just a login screen request. Still, ignore any cookie that's there.
         #
@@ -180,6 +180,7 @@ else {
         # He has no cookie and must log in.
         #
         $action = "login";
+        $template->param(LOGINSCREEN => 1);
     }
 }
 
@@ -236,29 +237,38 @@ if ($loginok) {
 # in the cookie-handling code.  So, here we only put up the form.
 #
 #
-if ( $action eq "login" ) {
+
+if ( $action eq "register" ) {
+	$template->param(REGISTERSCREEN => 1);
+	$template->param(TITLE => "Register");
+	if (param('adduserrun')) { 
+		my $firstname=param('firstname');
+    	my $lastname=param('lastname');
+    	my $email=param('email');
+    	my $username=param('username');
+    	my $password=param('password');
+    	my $error;
+    	$error=UserAdd($firstname,$lastname,$username,$password,$email);
+    	if ($error) { 
+			$template->param(REGFAILED => 1);
+      	} else {
+			$template->param(JUSTLOGGEDIN => 1);
+			$template->param(LOGINSCREEN => 0);
+      	}
+	}
+} elsif ( $action eq "login" ) {
     if ($logincomplain) {
         $template->param(LOGINFAILED => 1);
        	$template->param(LOGINSCREEN => 1);
     }
-}
-
-if ( $action eq "logout" ) {
+} elsif ( $action eq "logout" ) {
     $template->param(LOGOUTSUCCESS => 1);
     $template->param(LOGINSCREEN => 1);
-}
-
-# QUERY
-#
-# Query is a "normal" form.
-#
-#
-if ( $action eq "overview" ) {
+} elsif ( $action eq "overview" ) {
 	$template->param(JUSTLOGGEDIN => 1);
 	$template->param(NAME => $user);
     $template->param(TITLE => "Overview");
-}
-if ( $action eq "portfolioadd" ) {
+} elsif ( $action eq "portfolioadd" ) {
 	$template->param(PORTFOLIO_ADD => 1);
 	$template->param(TITLE => "Add New Portfolio");
 	my @res;
@@ -269,8 +279,7 @@ if ( $action eq "portfolioadd" ) {
 			@res = ExecSQL($dbuser, $dbpasswd, "insert into stock_holdings(name, cashacct) values(" . $name . ", " . $cash . ")");
 		};
 	}
-}
-if ( $action eq "portfoliolist" ) {
+} elsif ( $action eq "portfoliolist" ) {
     #
     # check to see if user can see this
     #
@@ -283,11 +292,16 @@ if ( $action eq "portfoliolist" ) {
     	};
     } else {
     	eval {
-    		@res = ExecSQL($dbuser, $dbpasswd, "select name from stock_holdings where userid='" . $user . "'");
+    		@res = ExecSQL($dbuser, $dbpasswd, "select name from stock_holdings where username = '?' order by name", $user);
     	};
+    	my $out = "";
+    	foreach my $result (@res) {
+			my ( $name ) = @${$result};
+			$out .= "\t<dt>" . $name . "</dt>\n\t<dd>0</dd>";
+    		$template->param(PORTFOLIO_LISTING => $out);
+    	}
     }
-}
-if ( $action eq "browse" ) {
+} elsif ( $action eq "browse" ) {
 	$template->param(TITLE => "Browse Stocks");
 	$template->param(BROWSE => 1);
 	my @res;
@@ -319,14 +333,33 @@ if ( $action eq "browse" ) {
 		$out .= "</dl>";
 	}
 	$template->param(BROWSE_OUT => $out);
-}
-if ( $action eq "cash" ) {
-	$template->param(TITLE => "Your Cash Accounts");
-	$template->param(CASH => 1);
-}
-if ( $action eq "strategies" ) {
+} elsif ( $action eq "cash" ) {
+	if ( param("id" )) {
+		my $id = param("id");
+		$template->param(TITLE => "Cash Account: " . $id . "");
+		$template->param(CASH => 1);
+		$template->param(CASH_VIEW => 1);
+		my @acctinfo;
+		eval {
+			@acctinfo = ExecSQL($dbuser, $dbpasswd, "select * from cashaccts where id=?", $id);
+		};
+		
+	} else {
+		$template->param(TITLE => "Your Cash Accounts");
+		$template->param(CASH => 1);
+		my @accts;
+		eval {
+			@accts = ExecSQL($dbuser, $dbpasswd, "select * from cashaccts where id = (select distinct cashacct from stock_holdings where username = '?')", $user);
+		};
+		$out = "";
+		foreach my $acct (@accts) {
+			my ( $id, $accountname, $currentamt ) = @${$acct};
+			$out .= "\t<dt><a href=\"index.pl?act=cash&id=" . $id . "\">" . $accountname . "</a></dt>\n\t<dd>" . $currentamt . "</dd>\n";
+		}
+		$template->param(CASHLIST_OUT => $out);
+	}
+} elsif ( $action eq "strategies" ) {
 	$template->param(TITLE => "Your Strategies");
-	$template->param()
 }
 
 #
@@ -482,4 +515,13 @@ sub ExecSQL {
     $sth->finish();
     $dbh->disconnect();
     return @ret;
+}
+
+sub UserAdd { 
+ 	my ($firstname, $lastname, $username, $pwd, $email) = @_;
+ 	eval { ExecSQL($dbuser,$dbpasswd,
+		 "insert into portfolio_users (firstname,lastname,username,pwd,email) values (?,?,?,?,?)",undef,@_);};
+	$outputcookiecontent = join( "/", $username, $pwd );
+    $loginok = 1;
+  	return $@;
 }
