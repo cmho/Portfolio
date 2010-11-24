@@ -63,7 +63,7 @@
         			<p class="username"><TMPL_VAR NAME="NAME"></p>
         			<p class="manage"><a href="index.pl?act=logout">logout</a></p>
         		</div>
-        		<img width="70" height="70" />
+        		<img width="70" height="70" src="images/userpic.png" />
         	</div>
         	<div style="clear: both"></div>
         </div>
@@ -115,10 +115,42 @@
         	</dl>
         </TMPL_IF>
         <TMPL_IF NAME="CASH">
-        	<p><a href="index.pl?act=cashadd"><img src="images/add.png" /> Add New Cash Account</a></p>
-        	<dl id="cashacctlist">
-        	<TMPL_VAR name="CASHLIST_OUT">
-        	</dl>
+        	<TMPL_IF NAME="CASH_VIEW">
+        		<TMPL_IF NAME="WITHDRAWOK">
+        			<p class="notify">Withdrawal was a success.</p>
+        		</TMPL_IF>
+        		<TMPL_IF NAME="DEPOSITOK">
+        			<p class="notify">Deposit was a success.</p>
+        		</TMPL_IF>
+        		<dl id="cashacctlist">
+        			<dt><TMPL_VAR name="CASHACCTNAME"></dt>
+        			<dd><TMPL_VAR name="CASHACCTVAL"></dd>
+        		</dl>
+        		<form class="left">
+        			<h2>Deposit to Account</h2>
+        			<input type="text" name="amt" /><input type="hidden" name="depositrun" value="1" /><input type="submit" />
+        		</form>
+        		<form class="right">
+        			<h2>Withdraw from Account</h2>
+        			<input type="text" name="amt" /><input type="hidden" name="withdrawrun" value="1" /><input type="submit" />
+        		</form>
+        	<TMPL_ELSE>
+        		<p><a href="index.pl?act=cashadd"><img src="images/add.png" /> Add New Cash Account</a></p>
+        		<dl id="cashacctlist">
+        		<TMPL_VAR name="CASHLIST_OUT">
+        		</dl>
+        	</TMPL_IF>
+        </TMPL_IF>
+        <TMPL_IF NAME="CASHACCTADD">
+        	<TMPL_IF NAME="CASHACCTADDOK">
+        		<p class="notify">Added cash account.</p>
+        	</TMPL_IF>
+        	<form id="addcashacct">
+        		<label for="name">Account Name</label><input type="text" name="name" /><br />
+        		<label for="startval">Starting Value</label><input type="text" name="startval" /><br />
+        		<input type="hidden" name="cashacctaddrun" value="1" />
+        		<input type="submit" />
+        	</form>
         </TMPL_IF>
         <TMPL_IF NAME="BROWSE">
         	<TMPL_IF NAME="STOCK">

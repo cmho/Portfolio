@@ -335,15 +335,39 @@ if ( $action eq "register" ) {
 	$template->param(BROWSE_OUT => $out);
 } elsif ( $action eq "cash" ) {
 	if ( param("id" )) {
-		my $id = param("id");
 		$template->param(TITLE => "Cash Account: " . $id . "");
 		$template->param(CASH => 1);
 		$template->param(CASH_VIEW => 1);
+		if (param('withdrawcashrun')) { 
+			my $withdraw = ('withdrawamt');
+			my $accname = ('accountname');
+			my $ttype   = ('WITH');
+    		$error = DepositCash($accname,$ttype,$withdraw);
+    		if ($error) { 
+				$template->param(WITHDRAWNOTOK => 1);
+    		} else {
+				$template->param(WITHDRAWOK => 1);
+    		}
+		
+		}
+		if (param('depositcashrun')) { 
+			my $deposit = ('depositamt');
+			my $accname = ('accountname');
+			my $ttype   = ('DEPO');
+		    $error=DepositCash($accname,$ttype,$deposit);
+		    if ($error) { 
+				$template->param(DEPOSITNOTOK => 1);
+		    } else {
+				$template->param(DEPOSITOK => 1);
+		    }
+		}
+		my $id = param("id");
 		my @acctinfo;
 		eval {
 			@acctinfo = ExecSQL($dbuser, $dbpasswd, "select * from cashaccts where id=?", $id);
 		};
-		
+		$template->param(CASHACCTNAME => @acctinfo[1]);
+		$template->param(CASHACCTVAL => @acctinfo[2]);
 	} else {
 		$template->param(TITLE => "Your Cash Accounts");
 		$template->param(CASH => 1);
@@ -357,6 +381,17 @@ if ( $action eq "register" ) {
 			$out .= "\t<dt><a href=\"index.pl?act=cash&id=" . $id . "\">" . $accountname . "</a></dt>\n\t<dd>" . $currentamt . "</dd>\n";
 		}
 		$template->param(CASHLIST_OUT => $out);
+	}
+} elsif ( $action eq "cashacctadd" ) {
+	$template->param(CASHACCTADD => 1);
+	$template->param(TITLE => "Add Cash Account");
+	if ( param("cashacctaddrun") ) {
+		my @err;
+		my $name = param("name");
+		my $amt = param("startval");
+		eval {
+			@err = ExecSQL($dbuser, $dbpasswd, "insert into cashaccts(accountname, currentamt) values(?, ?)", $name, $amt);
+		};
 	}
 } elsif ( $action eq "strategies" ) {
 	$template->param(TITLE => "Your Strategies");
@@ -524,4 +559,20 @@ sub UserAdd {
 	$outputcookiecontent = join( "/", $username, $pwd );
     $loginok = 1;
   	return $@;
+}
+
+sub DepositCash { 
+  eval { ExecSQL($dbuser,$dbpasswd,
+		 "update cashaccts set currentamt=currentamt+$depoist where accountname=$accname",undef,@_);
+		 ExecSQL($dbuser,$dbpasswd,
+		 "insert into transactions (cashacct,transtype,foramt) values (?,?,?)",undef,@_);};	 
+  return $@;
+}
+
+sub WithdrawCash { 
+  eval { ExecSQL($dbuser,$dbpasswd,
+		 "update cashaccts set currentamt=currentamt-$depoist where accountname=$accname",undef,@_);
+		 ExecSQL($dbuser,$dbpasswd,
+		 "insert into transactions (cashacct,transtype,foramt) values (?,?,?)",undef,@_);};
+  return $@;
 }
