@@ -569,6 +569,8 @@ sub UserAdd {
 		 "insert into portfolio_users (firstname,lastname,username,pwd,email) values (?,?,?,?,?)",undef,@_);};
 	$outputcookiecontent = join( "/", $username, $pwd );
     $loginok = 1;
+    $user = $username;
+    $password = $pwd;
   	return $@;
 }
 
