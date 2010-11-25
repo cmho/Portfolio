@@ -19,7 +19,6 @@ my @sqloutput      = ();
 # rules that make the script more resilient and easier to run
 # as a CGI script.
 #
-use lib '/home/cmh736/public_html/portfolio';
 #use strict;
 
 # The CGI web generation stuff
@@ -28,12 +27,14 @@ use lib '/home/cmh736/public_html/portfolio';
 #
 # We'll use the "standard" procedural interface to CGI
 # instead of the OO default interface
+
+use lib '/home/cmh736/public_html/portfolio';
 use CGI qw(:standard);
 use CGI;
 use CGI::Carp qw (fatalsToBrowser);
-use File::Basename;
 use HTML::Template;
 use Data::Serializer;
+use File::Basename;
 
 $CGI::POST_MAX = 1024 * 5000;
 
@@ -105,11 +106,9 @@ my $template = HTML::Template->new(filename => '/home/cmh736/public_html/portfol
 my $action;
 if ( param("act") ) {
     $action = param("act");
-    $template->param(LOGINSCREEN => 0);
 }
 else {
     $action = "login";
-    $template->param(LOGINSCREEN => 1);
 }
 
 #
@@ -135,8 +134,6 @@ if ( $action eq "login" || param('loginrun') || $action eq "register" ) {
             # Also, land him in the query screen
             $outputcookiecontent = join( "/", $user, $password );
             $loginok = 1;
-            $template->param(LOGINSCREEN => 0);
-            $template->param(OVERVIEW => 1);
         }
         else {
 
@@ -144,29 +141,9 @@ if ( $action eq "login" || param('loginrun') || $action eq "register" ) {
             # don't give him a cookie
             $logincomplain = 1;
             $action        = "login";
-            $template->param(LOGINSCREEN => 1);
         }
     }
-    elsif ( $action eq "register" ) {
-    		$template->param(LOGINSCREEN => 0);
-			$template->param(REGISTERSCREEN => 1);
-			$template->param(TITLE => "Register");
-			if (param('adduserrun')) { 
-				my $firstname=param('firstname');
-		    	my $lastname=param('lastname');
-		    	my $email=param('email');
-		    	my $username=param('username');
-		    	my $password=param('password');
-		    	my $error;
-		    	$error=UserAdd($firstname,$lastname,$username,$password,$email);
-		    	if ($error) { 
-					$template->param(REGFAILED => 1);
-		      	} else {
-					$template->param(JUSTLOGGEDIN => 1);
-					$template->param(LOGINSCREEN => 0);
-					$template->param(REGISTERSCREEN => 0);
-		      	}
-			}
+    else {
 
         #
         # Just a login screen request. Still, ignore any cookie that's there.
@@ -194,7 +171,6 @@ else {
 
             # cookie is OK, give him back the refreshed cookie
             $outputcookiecontent = $inputcookiecontent;
-			$template->param(LOGINSCREEN => 0);
         }
     }
     else {
@@ -203,7 +179,6 @@ else {
         # He has no cookie and must log in.
         #
         $action = "login";
-        #$template->param(LOGINSCREEN => 1);
     }
 }
 
@@ -238,10 +213,15 @@ else {
 #
 # Now we finally begin spitting back HTML
 #
+#
+
+#
+# This tells the web browser to render the page in the style
+# defined in the blog.css file
+#
 
 if ($loginok) {
-    $template->param(LOGINSCREEN => 0);
-    $template->param(JUSTLOGGEDIN => 1);
+    $action = "overview";
 }
 
 #
@@ -260,37 +240,47 @@ if ($loginok) {
 # in the cookie-handling code.  So, here we only put up the form.
 #
 #
-
 if ( $action eq "login" ) {
+    $template->param(TITLE => "Login");
     if ($logincomplain) {
         $template->param(LOGINFAILED => 1);
+    }
+    if ( $logincomplain or !param('loginrun') ) {
        	$template->param(LOGINSCREEN => 1);
     }
 } elsif ( $action eq "logout" ) {
-    $template->param(LOGOUTSUCCESS => 1);
     $template->param(LOGINSCREEN => 1);
     $action = "login";
+} elsif ( $action eq "register" ) {
+	$template->param(LOGINSCREEN => 0);
+	$template->param(REGISTERSCREEN => 1);
+	$template->param(TITLE => "Register");
+	if (param('adduserrun')) { 
+	    my $firstname=param('firstname');
+	    my $lastname=param('lastname');
+	    my $email=param('email');
+	    my $username=param('username');
+	    my $password=param('password');
+	    my $error;
+	    $error = UserAdd($firstname, $lastname, $username, $password, $email);
+	    if ($error) { 
+	    	$template->param(REGFAILED => 1);
+	  	} else {
+	    	$template->param(JUSTLOGGEDIN => 1);
+	    	$template->param(LOGINSCREEN => 0);
+	    	$template->param(REGISTERSCREEN => 0);
+	  	}
+	}
 } elsif ( $action eq "overview" ) {
 	$template->param(LOGINSCREEN => 0);
 	$template->param(JUSTLOGGEDIN => 1);
 	$template->param(NAME => $user);
     $template->param(TITLE => "Overview");
-} elsif ( $action eq "portfolioadd" ) {
-	$template->param(LOGINSCREEN => 0);
-	$template->param(PORTFOLIO_ADD => 1);
-	$template->param(TITLE => "Add New Portfolio");
-	my @res;
-	if (param("createrun")) {
-		my $name = param("name");
-		my $acct = param("cash");
-		eval {
-			@res = ExecSQL($dbuser, $dbpasswd, "insert into stock_holdings(name, cashacct) values(" . $name . ", " . $cash . ")");
-		};
-	}
+} elsif ( $action eq "browse" ) {
+	$template->param(TITLE => "Browse Stocks");
 } elsif ( $action eq "portfoliolist" ) {
-    $template->param(LOGINSCREEN => 0);
+	$template->param(TITLE => "Your Portfolios");
     $template->param(PORTFOLIOS => 1);
-    $template->param(TITLE => "Your Portfolios");
     my @res;
     if (param("folio")) {
     	eval {
@@ -298,120 +288,127 @@ if ( $action eq "login" ) {
     	};
     } else {
     	eval {
-    		@res = ExecSQL($dbuser, $dbpasswd, "select name from stock_holdings where username = '?' order by name", $user);
+    		@res = ExecSQL($dbuser, $dbpasswd, "select * from stock_holdings where username='" . $user . "' order by name");
     	};
     	my $out = "";
     	foreach my $result (@res) {
-			my ( $name ) = @${$result};
+			my ( $id, $name, $username, $cashacct, $stocks ) = @{$result};
 			$out .= "\t<dt>" . $name . "</dt>\n\t<dd>0</dd>";
-    		$template->param(PORTFOLIO_LISTING => $out);
     	}
+    	$template->param(PORTFOLIO_LISTING => $out);
     }
-} elsif ( $action eq "browse" ) {
-	$template->param(LOGINSCREEN => 0);
-	$template->param(TITLE => "Browse Stocks");
-	$template->param(BROWSE => 1);
+} elsif ( $action eq "portfolioadd" ) {
+	$template->param(PORTFOLIO_ADD => 1);
+	$template->param(TITLE => "Add New Portfolio");
 	my @res;
-	my $out = "";
-	if (param("stock")) {
-		$template->param(STOCK => param("stock"));
+	if (param("createrun")) {
+		my $name = param("name");
+		my $acct = param("cash");
 		eval {
-			@res = ExecSQL($dbuser, $dbpasswd, "select * from symbols where shortname=?", param("stock"));
+			@res = ExecSQL($dbuser, $dbpasswd, "insert into stock_holdings(id, name, username, cashacct) values(portfolio_id.nextval, ?, ?, ?)", "ROW", $name, $user, $acct);
 		};
-		my @values = ();
-		foreach my $result (@res) {
-			my ( $id, $stockname, $stockshort, $stockcur, $stockold ) = @${$result};
-			$template->param(STOCKNAME => $stockname);
-			$template->param(STOCK_SHORT => $stockshort);
-			$template->param(STOCK_CURRENT => $stockcur);
-			@values = deserialize($stockold);
-		}
-		
 	} else {
-		$out .= "<dl>\n\t";
+		my @accts;
 		eval {
-			@res = ExecSQL($dbuser, $dbpasswd, "select shortname, longname, val from symbols order by shortname");
+			@accts = ExecSQL($dbuser, $dbpasswd, "select id, accountname from cashaccts where owner = '" . $user . "'");
 		};
-		foreach my $result (@res) {
-			my ( $shortname, $longname, $val ) = @${$result};
-			$out .= "\t<dt><a href=\"index.pl?act=browse&stock=" . $shortname . "\">" . $longname . "(" . $shortname . ")</a></dt>\n";
-			$out .= "\t<dd>" . $val . "</dd>\n";
+		my $cashaccts_out = "";
+		foreach my $acct (@accts) {
+			my ($id, $acctname) = @{$acct};
+			$cashaccts_out .= "<option value=\"" . $id . "\">" . $acctname . "</option>";
 		}
-		$out .= "</dl>";
+		$template->param(CASHACCTSFORPORTFLS => $cashaccts_out);
 	}
-	$template->param(BROWSE_OUT => $out);
+
 } elsif ( $action eq "cash" ) {
-	$template->param(LOGINSCREEN => 0);
-	if ( param("id" )) {
-		$template->param(TITLE => "Cash Account: " . $id . "");
-		$template->param(CASH => 1);
+	$template->param(CASH => 1);
+	if ( param("id") ) {
 		$template->param(CASH_VIEW => 1);
-		if (param('withdrawcashrun')) { 
-			my $withdraw = ('withdrawamt');
-			my $accname = ('accountname');
-			my $ttype   = ('WITH');
-    		$error = DepositCash($accname,$ttype,$withdraw);
+		my @acctinfo;
+		eval {
+			@acctinfo = ExecSQL($dbuser, $dbpasswd, "select * from cashaccts where id=?", "ROW", param("id"));
+		};
+		$template->param(ACCTNAME => $acctinfo[1]);
+		$template->param(ACCTVAL => $acctinfo[2]);
+		$template->param(ACCTID => $acctinfo[0]);
+		$template->param(TITLE => "Cash Account: " . $acctinfo[1] . "");
+	
+		if (param('withdrawrun')) { 
+			my $withdraw = param('withdrawamt');
+    		my $error = WithdrawCash($acctinfo[1], 'WITH', $withdraw);
     		if ($error) { 
 				$template->param(WITHDRAWNOTOK => 1);
     		} else {
 				$template->param(WITHDRAWOK => 1);
     		}
 		
-		}
-		if (param('depositcashrun')) { 
-			my $deposit = ('depositamt');
-			my $accname = ('accountname');
-			my $ttype   = ('DEPO');
-		    $error=DepositCash($accname,$ttype,$deposit);
+		} elsif (param('depositrun')) { 
+			my $deposit = param('depositamt');
+		    my $error = DepositCash($acctinfo[1], 'DEPO', $deposit);
 		    if ($error) { 
 				$template->param(DEPOSITNOTOK => 1);
 		    } else {
 				$template->param(DEPOSITOK => 1);
 		    }
 		}
-		my $id = param("id");
-		my @acctinfo;
-		eval {
-			@acctinfo = ExecSQL($dbuser, $dbpasswd, "select * from cashaccts where id=?", $id);
-		};
-		$template->param(CASHACCTNAME => @acctinfo[1]);
-		$template->param(CASHACCTVAL => @acctinfo[2]);
 	} else {
 		$template->param(TITLE => "Your Cash Accounts");
-		$template->param(CASH => 1);
 		my @accts;
 		eval {
-			@accts = ExecSQL($dbuser, $dbpasswd, "select * from cashaccts where id = (select distinct cashacct from stock_holdings where username = '?')", $user);
+			@accts = ExecSQL($dbuser, $dbpasswd, "select * from cashaccts where owner ='" . $user . "'");
 		};
-		$out = "";
+		my $out = "";
 		foreach my $acct (@accts) {
-			my ( $id, $accountname, $currentamt ) = @${$acct};
-			$out .= "\t<dt><a href=\"index.pl?act=cash&id=" . $id . "\">" . $accountname . "</a></dt>\n\t<dd>" . $currentamt . "</dd>\n";
+			my ( $id, $accountname, $currentamt, $owner ) = @{$acct};
+			$out .= "\t<dt><a href=\"index.pl?act=cash&id=" . $accountname . "\">" . $accountname . "</a></dt>\n\t<dd>" . $currentamt . "</dd>\n";
 		}
 		$template->param(CASHLIST_OUT => $out);
 	}
 } elsif ( $action eq "cashacctadd" ) {
-	$template->param(LOGINSCREEN => 0);
-	$template->param(CASHACCTADD => 1);
 	$template->param(TITLE => "Add Cash Account");
+	$template->param(CASHACCTADD => 1);
 	if ( param("cashacctaddrun") ) {
 		my @err;
 		my $acctname = param("acctname");
 		my $amt = param("startval") + 0.0;
 		eval {
-			@err = ExecSQL($dbuser, $dbpasswd, "insert into cashaccts(accountname, currentamt, owner) values(?, ?, ?)", $acctname, $amt, $user);
+			@err = ExecSQL($dbuser, $dbpasswd, "insert into cashaccts(id, accountname, currentamt, owner) values(cashacct_id.nextval, ?, ?, ?)", "ROW", $acctname, $amt, $user);
 		};
 		$template->param(CASHACCTADDOK => 1);
 	}
-} elsif ( $action eq "strategies" ) {
-	$template->param(LOGINSCREEN => 0);
-	$template->param(TITLE => "Your Strategies");
+} elsif ( $action eq "transactions" ) {
+	$template->param(TITLE => "Transactions");
+	$template->param(TRANSACTIONS => 1);
+	if (param("id")) {
+		my $acct = param("id");
+		$template->param(TITLE => "Your Transactions");
+		my @res = ();
+		eval {
+			@res = ExecSQL($dbuser, $dbpasswd, "select id, madeby, transtype, foramt, transtime from transactions where cashacct='" . $acct . "' order by transtime");
+		};
+		my $out = "";
+		foreach my $result (@res) {
+		   my ( $id, $madeby, $transtype, $foramt, $transtime ) = @{$result};
+		   $out .= "<tr>";
+		   $out .= "<td>" . $transtime . "</td>";
+		   $out .= "<td>" . $transtype . "</td>";
+		   $out .= "<td>" . $foramt . "</td>";
+		   $out .= "<td>" . $madeby . "</td>";
+		   $out .= "</tr>";
+		}
+		$template->param(TRANSACTION_LIST => $out);
+	}
+} elsif ( $action eq "trends" ) {
+	$template->param(TITLE => "Trends");
 }
+
+print $template->output;
 
 #
 # Generate debugging output if anything is enabled.
 #
 #
+
 if ( $show_params || $show_cookies || $show_sqlinput || $show_sqloutput ) {
 	print "<div style=\"text-align: left;\">";
     print hr, p, hr, p, h2('Debugging Output');
@@ -444,15 +441,6 @@ if ( $show_params || $show_cookies || $show_sqlinput || $show_sqloutput ) {
     print "</div>";
 }
 
-print $template->output;
-
-#
-#
-# Check to see if user and password combination exist
-#
-# $ok = ValidUser($user,$password)
-#
-#
 sub ValidUser {
     my ( $user, $password ) = @_;
     my @col;
@@ -469,6 +457,84 @@ sub ValidUser {
     	$template->param(NAME => $user);
         return $col[0] > 0;
     }
+}
+
+#
+# Given a list of scalars, or a list of references to lists, generates
+# an html table
+#
+#
+# $type = undef || 2D => @list is list of references to row lists
+# $type = ROW   => @list is a row
+# $type = COL   => @list is a column
+#
+# $headerlistref points to a list of header columns
+#
+#
+# $html = MakeTable($type, $headerlistref,@list);
+#
+sub MakeTable {
+    my ( $type, $headerlistref, @list ) = @_;
+    my $out;
+
+    #
+    # Check to see if there is anything to output
+    #
+    if ( ( defined $headerlistref ) || ( $#list >= 0 ) ) {
+
+        # if there is, begin a table
+        #
+        $out = "<table>";
+
+        #
+        # if there is a header list, then output it in bold
+        #
+        if ( defined $headerlistref ) {
+            $out .= "<tr>"
+              . join( "", ( map { "<th>$_</th>" } @{$headerlistref} ) )
+              . "</tr>";
+        }
+
+        #
+        # If it's a single row, just output it in an obvious way
+        #
+        if ( $type eq "ROW" ) {
+
+           #
+           # map {code} @list means "apply this code to every member of the list
+           # and return the modified list.  $_ is the current list member
+           #
+            $out .= "<tr>" . ( map { "<td>$_</td>" } @list ) . "</tr>";
+        }
+        elsif ( $type eq "COL" ) {
+
+            #
+            # ditto for a single column
+            #
+            $out .= join( "", map { "<tr><td>$_</td></tr>" } @list );
+        }
+        else {
+
+            #
+            # For a 2D table, it's a bit more complicated...
+            #
+            $out .= join(
+                "",
+                map { "<tr>$_</tr>" } (
+                    map {
+                        join( "", map { "<td>$_</td>" } @{$_} )
+                      } @list
+                )
+            );
+        }
+        $out .= "</table>";
+    }
+    else {
+
+        # if no header row or list, then just say none.
+        $out .= "(none)";
+    }
+    return $out;
 }
 
 #
@@ -545,6 +611,9 @@ sub ExecSQL {
     if ( defined $type and $type eq "ROW" ) {
         @data = $sth->fetchrow_array();
         $sth->finish();
+        if ($show_sqloutput) {
+            push @sqloutput, MakeTable( "ROW", undef, @data );
+        }
         $dbh->disconnect();
         return @data;
     }
@@ -555,10 +624,14 @@ sub ExecSQL {
     if ( defined $type and $type eq "COL" ) {
         @data = map { $_->[0] } @ret;
         $sth->finish();
+        if ($show_sqloutput) {
+            push @sqloutput, MakeTable( "COL", undef, @data );
+        }
         $dbh->disconnect();
         return @data;
     }
     $sth->finish();
+    if ($show_sqloutput) { push @sqloutput, MakeTable( "2D", undef, @ret ); }
     $dbh->disconnect();
     return @ret;
 }
@@ -575,17 +648,22 @@ sub UserAdd {
 }
 
 sub DepositCash { 
+  my ($accname, $transtype, $deposit) = @_;
+  if ($transtype eq "WITH") {
+  	$deposit *= -1;
+  }
   eval { ExecSQL($dbuser,$dbpasswd,
-		 "update cashaccts set currentamt=currentamt+$depoist where accountname=$accname",undef,@_);
+		 "update cashaccts set currentamt=currentamt+" . $deposit . " where accountname='" . $accname . "'");
 		 ExecSQL($dbuser,$dbpasswd,
-		 "insert into transactions (cashacct,transtype,foramt) values (?,?,?)",undef,@_);};	 
+		 "insert into transactions (id, cashacct,transtype,foramt, madeby, transtime) values (transaction_id.nextval, ?,?,?,?,?)","ROW", $accname, $transtype, $deposit, $user, time());};	 
   return $@;
 }
 
 sub WithdrawCash { 
+  my ($accname, $transtype, $deposit) = @_;
   eval { ExecSQL($dbuser,$dbpasswd,
-		 "update cashaccts set currentamt=currentamt-$depoist where accountname=$accname",undef,@_);
+		 "update cashaccts set currentamt=currentamt-" . $deposit . " where accountname='" . $accname . "'");
 		 ExecSQL($dbuser,$dbpasswd,
-		 "insert into transactions (cashacct,transtype,foramt) values (?,?,?)",undef,@_);};
+		 "insert into transactions (id,cashacct,transtype,foramt,madeby,transtime) values (transaction_id.nextval, ?,?,?,?,?)","ROW", $accname, $transtype, $deposit, $user, time());};
   return $@;
 }

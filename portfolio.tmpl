@@ -115,6 +115,8 @@
         </TMPL_IF>
         <TMPL_IF NAME="CASH">
         	<TMPL_IF NAME="CASH_VIEW">
+        		<h2>Cash Account <TMPL_VAR NAME="ACCTNAME"></h2>
+        		<p><a href="index.pl?act=transactions&id=<TMPL_VAR NAME='ACCTID'>">Review Transactions</a></p>
         		<TMPL_IF NAME="WITHDRAWOK">
         			<p class="notify">Withdrawal was a success.</p>
         		</TMPL_IF>
@@ -122,19 +124,19 @@
         			<p class="notify">Deposit was a success.</p>
         		</TMPL_IF>
         		<dl id="cashacctlist">
-        			<dt><TMPL_VAR name="CASHACCTNAME"></dt>
-        			<dd><TMPL_VAR name="CASHACCTVAL"></dd>
+        			<dt><TMPL_VAR name="ACCTNAME"></dt>
+        			<dd><TMPL_VAR name="ACCTVAL"></dd>
         		</dl>
         		<form class="left">
         			<h2>Deposit to Account</h2>
-        			<input type="text" name="amt" /><input type="hidden" name="depositrun" value="1" /><input type="submit" />
+        			<input type="text" name="depositamt" /><input type="hidden" name="act" value="cash" /><input type="hidden" name="depositrun" value="1" /><input type="hidden" name="id" value="<TMPL_VAR NAME='ACCTID'>" /><input type="hidden" name="name" value="<TMPL_VAR NAME='ACCTNAME'>" /><input type="submit" />
         		</form>
         		<form class="right">
         			<h2>Withdraw from Account</h2>
-        			<input type="text" name="amt" /><input type="hidden" name="withdrawrun" value="1" /><input type="submit" />
+        			<input type="text" name="withdrawamt" value="<TMPL_VAR NAME='ACCTVAL'>" /><input type="hidden" name="act" value="cash" /><input type="hidden" name="withdrawrun" value="1" /><input type="hidden" name="name" value="<TMPL_VAR NAME='ACCTNAME'>" /><input type="hidden" name="id" value="<TMPL_VAR NAME='ACCTID'>" /><input type="submit" />
         		</form>
         	<TMPL_ELSE>
-        		<p><a href="index.pl?act=cashadd"><img src="images/add.png" /> Add New Cash Account</a></p>
+        		<p><a href="index.pl?act=cashacctadd"><img src="images/add.png" /> Add New Cash Account</a></p>
         		<dl id="cashacctlist">
         		<TMPL_VAR name="CASHLIST_OUT">
         		</dl>
@@ -173,15 +175,27 @@
         </TMPL_IF>
         <TMPL_IF NAME="PORTFOLIO_ADD">
         	<h2>Add New Portfolio</h2>
-        	<form id="addfolio">
+        	<form id="addfolio" method="POST">
         		<label for="name">Name</label><input type="text" name="name" id="portfolioname" /><br />
         		<label for="cash">Cash Account</label><select name="cash" id="cashacct">
-        												<option value="$id">$name</option>
+        												<TMPL_VAR NAME="CASHACCTSFORPORTFLS">
         											  </select><br />
-        		<input type="hidden" name="act" value="addportfolio" />
+        		<input type="hidden" name="act" value="portfolioadd" />
         		<input type="hidden" name="createrun" value="1" />
-        		<input type="submit" disabled="true" />
+        		<input type="submit" />
         	</form>
+        </TMPL_IF>
+        <TMPL_IF NAME="TRANSACTIONS">
+        	<h2>Your Transactions</h2>
+        	<table border="0" cellpadding="0" cellspacing="0" width="100%">
+        		<tr>
+        			<th>Time</th>
+        			<th>Type</th>
+        			<th>Amount</th>
+        			<th>Made By</th>
+        		</tr>
+        		<TMPL_VAR NAME="TRANSACTION_LIST">
+        	</table>
         </TMPL_IF>
         </div>
         <div style="clear: both"></div>
