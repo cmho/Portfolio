@@ -387,11 +387,12 @@ if ( $action eq "register" ) {
 	$template->param(TITLE => "Add Cash Account");
 	if ( param("cashacctaddrun") ) {
 		my @err;
-		my $name = param("name");
-		my $amt = param("startval");
+		my $acctname = param("acctname");
+		my $amt = param("startval") + 0.0;
 		eval {
-			@err = ExecSQL($dbuser, $dbpasswd, "insert into cashaccts(accountname, currentamt) values(?, ?)", $name, $amt);
+			@err = ExecSQL($dbuser, $dbpasswd, "insert into cashaccts(accountname, currentamt, owner) values(?, ?, ?)", $acctname, $amt, $user);
 		};
+		$template->param(CASHACCTADDOK => 1);
 	}
 } elsif ( $action eq "strategies" ) {
 	$template->param(TITLE => "Your Strategies");

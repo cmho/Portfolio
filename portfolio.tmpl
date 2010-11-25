@@ -79,7 +79,7 @@
         			<li><a href="index.pl?act=cashacctadd">Add Cash Account</a></li>
         		</ul></li>
         	<li><a href="#">Trends</a></li>
-        	<li><a href="#">Strategies</a></li>
+        	<li><a href="index.pl?act=strategies">Strategies</a></li>
         </ul>
         <div id="contentpane">
         <TMPL_IF NAME="JUSTLOGGEDIN">
@@ -146,8 +146,9 @@
         		<p class="notify">Added cash account.</p>
         	</TMPL_IF>
         	<form id="addcashacct">
-        		<label for="name">Account Name</label><input type="text" name="name" /><br />
+        		<label for="acctname">Account Name</label><input type="text" name="acctname" /><br />
         		<label for="startval">Starting Value</label><input type="text" name="startval" /><br />
+        		<input type="hidden" name="act" value="cashacctadd" />
         		<input type="hidden" name="cashacctaddrun" value="1" />
         		<input type="submit" />
         	</form>
