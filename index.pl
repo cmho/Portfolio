@@ -116,7 +116,7 @@ else {
 # Is this a login request or attempt?
 # Ignore cookies in this case.
 #
-if ( $action eq "login" || param('loginrun') ) {
+if ( $action eq "login" || param('loginrun') || $action eq "register" ) {
     if ( param('loginrun') ) {
 
         #
@@ -135,6 +135,8 @@ if ( $action eq "login" || param('loginrun') ) {
             # Also, land him in the query screen
             $outputcookiecontent = join( "/", $user, $password );
             $loginok = 1;
+            $template->param(LOGINSCREEN => 0);
+            $template->param(OVERVIEW => 1);
         }
         else {
 
@@ -145,7 +147,27 @@ if ( $action eq "login" || param('loginrun') ) {
             $template->param(LOGINSCREEN => 1);
         }
     }
-    else {
+    elsif ( $action eq "register" ) {
+    		$template->param(LOGINSCREEN => 0);
+			$template->param(REGISTERSCREEN => 1);
+			$template->param(TITLE => "Register");
+			if (param('adduserrun')) { 
+				my $firstname=param('firstname');
+		    	my $lastname=param('lastname');
+		    	my $email=param('email');
+		    	my $username=param('username');
+		    	my $password=param('password');
+		    	my $error;
+		    	$error=UserAdd($firstname,$lastname,$username,$password,$email);
+		    	if ($error) { 
+					$template->param(REGFAILED => 1);
+		      	} else {
+					$template->param(JUSTLOGGEDIN => 1);
+					$template->param(LOGINSCREEN => 0);
+					$template->param(REGISTERSCREEN => 0);
+		      	}
+			}
+
         #
         # Just a login screen request. Still, ignore any cookie that's there.
         #
@@ -172,6 +194,7 @@ else {
 
             # cookie is OK, give him back the refreshed cookie
             $outputcookiecontent = $inputcookiecontent;
+			$template->param(LOGINSCREEN => 0);
         }
     }
     else {
@@ -180,7 +203,7 @@ else {
         # He has no cookie and must log in.
         #
         $action = "login";
-        $template->param(LOGINSCREEN => 1);
+        #$template->param(LOGINSCREEN => 1);
     }
 }
 
@@ -238,25 +261,7 @@ if ($loginok) {
 #
 #
 
-if ( $action eq "register" ) {
-	$template->param(REGISTERSCREEN => 1);
-	$template->param(TITLE => "Register");
-	if (param('adduserrun')) { 
-		my $firstname=param('firstname');
-    	my $lastname=param('lastname');
-    	my $email=param('email');
-    	my $username=param('username');
-    	my $password=param('password');
-    	my $error;
-    	$error=UserAdd($firstname,$lastname,$username,$password,$email);
-    	if ($error) { 
-			$template->param(REGFAILED => 1);
-      	} else {
-			$template->param(JUSTLOGGEDIN => 1);
-			$template->param(LOGINSCREEN => 0);
-      	}
-	}
-} elsif ( $action eq "login" ) {
+if ( $action eq "login" ) {
     if ($logincomplain) {
         $template->param(LOGINFAILED => 1);
        	$template->param(LOGINSCREEN => 1);
@@ -264,11 +269,14 @@ if ( $action eq "register" ) {
 } elsif ( $action eq "logout" ) {
     $template->param(LOGOUTSUCCESS => 1);
     $template->param(LOGINSCREEN => 1);
+    $action = "login";
 } elsif ( $action eq "overview" ) {
+	$template->param(LOGINSCREEN => 0);
 	$template->param(JUSTLOGGEDIN => 1);
 	$template->param(NAME => $user);
     $template->param(TITLE => "Overview");
 } elsif ( $action eq "portfolioadd" ) {
+	$template->param(LOGINSCREEN => 0);
 	$template->param(PORTFOLIO_ADD => 1);
 	$template->param(TITLE => "Add New Portfolio");
 	my @res;
@@ -280,9 +288,7 @@ if ( $action eq "register" ) {
 		};
 	}
 } elsif ( $action eq "portfoliolist" ) {
-    #
-    # check to see if user can see this
-    #
+    $template->param(LOGINSCREEN => 0);
     $template->param(PORTFOLIOS => 1);
     $template->param(TITLE => "Your Portfolios");
     my @res;
@@ -302,6 +308,7 @@ if ( $action eq "register" ) {
     	}
     }
 } elsif ( $action eq "browse" ) {
+	$template->param(LOGINSCREEN => 0);
 	$template->param(TITLE => "Browse Stocks");
 	$template->param(BROWSE => 1);
 	my @res;
@@ -334,6 +341,7 @@ if ( $action eq "register" ) {
 	}
 	$template->param(BROWSE_OUT => $out);
 } elsif ( $action eq "cash" ) {
+	$template->param(LOGINSCREEN => 0);
 	if ( param("id" )) {
 		$template->param(TITLE => "Cash Account: " . $id . "");
 		$template->param(CASH => 1);
@@ -383,6 +391,7 @@ if ( $action eq "register" ) {
 		$template->param(CASHLIST_OUT => $out);
 	}
 } elsif ( $action eq "cashacctadd" ) {
+	$template->param(LOGINSCREEN => 0);
 	$template->param(CASHACCTADD => 1);
 	$template->param(TITLE => "Add Cash Account");
 	if ( param("cashacctaddrun") ) {
@@ -395,6 +404,7 @@ if ( $action eq "register" ) {
 		$template->param(CASHACCTADDOK => 1);
 	}
 } elsif ( $action eq "strategies" ) {
+	$template->param(LOGINSCREEN => 0);
 	$template->param(TITLE => "Your Strategies");
 }
 
