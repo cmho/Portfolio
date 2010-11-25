@@ -116,7 +116,7 @@
         <TMPL_IF NAME="CASH">
         	<TMPL_IF NAME="CASH_VIEW">
         		<h2>Cash Account <TMPL_VAR NAME="ACCTNAME"></h2>
-        		<p><a href="index.pl?act=transactions&id=<TMPL_VAR NAME='ACCTID'>">Review Transactions</a></p>
+        		<p><a href="index.pl?act=transactions&id=<TMPL_VAR NAME='ACCTNAME'>">Review Transactions</a></p>
         		<TMPL_IF NAME="WITHDRAWOK">
         			<p class="notify">Withdrawal was a success.</p>
         		</TMPL_IF>
@@ -157,16 +157,16 @@
         <TMPL_IF NAME="BROWSE">
         	<TMPL_IF NAME="STOCK">
         		<div id="stockinfo">
-        			<h2><TMPL_VAR NAME="STOCK_SHORT">: <TMPL_VAR NAME="STOCKNAME"></h2>
+        			<h2><TMPL_VAR NAME="STOCK_SHORT"></h2>
         			<dl id="attr">
         				<dt>Last Closing Price</dt>
-        				<dd>0</dd>
+        				<dd><TMPL_VAR NAME="LASTCLOSE"></dd>
         				<dt>Last Opening Price</dt>
-        				<dd>0</dd>
+        				<dd><TMPL_VAR NAME="LASTOPEN"></dd>
         				<dt>Highest Price</dt>
-        				<dd>0</dd>
+        				<dd><TMPL_VAR NAME="MAX"></dd>
         				<dt>Lowest Price</dt>
-        				<dd>0</dd>
+        				<dd><TMPL_VAR NAME="MIN"></dd>
         			</dl>
         		</div>
         	<TMPL_ELSE>

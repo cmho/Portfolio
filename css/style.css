@@ -205,21 +205,21 @@ Main Page
 	font-size: 1em;
 }
 
-.symboltable {
+table {
 	border: none;
 }
 
-.symboltable th, .symboltable td {
+table th, table td {
 	padding: 5px;
 }
 
-.symboltable th {
+table th {
 	text-align: center;
 	border-bottom: 1px #000 solid;
 	font-weight: bold;
 }
 
-.symboltable tr:nth-child(even) {
+table tr:nth-child(even) {
 	background-color: #EEE;
 }
 

@@ -278,13 +278,28 @@ if ( $action eq "login" ) {
     $template->param(TITLE => "Overview");
 } elsif ( $action eq "browse" ) {
 	$template->param(TITLE => "Browse Stocks");
+	$template->param(BROWSE => 1);
+	if (param("id")) {
+		$template->param(STOCK => 1);
+		CheckData(param("id"));
+		my @res;
+		eval {
+			@res = ExecSQL($dbuser, $dbpasswd, "select * from newstocksdaily where symbol=?", "ROW", param("id"));
+		};
+		my ( $symbol, $day, $open, $close, $low, $high, $volume ) = @res;
+		$template->param(STOCK_SHORT => param("id"));
+		$template->param(LASTCLOSE => $close);
+		$template->param(LASTOPEN => $open);
+		$template->param(MIN => $low);
+		$template->param(MAX => $high);
+	}
 } elsif ( $action eq "portfoliolist" ) {
 	$template->param(TITLE => "Your Portfolios");
     $template->param(PORTFOLIOS => 1);
     my @res;
     if (param("folio")) {
     	eval {
-    		@res = ExecSQL($dbuser, $dbpasswd, "select * from stock_holdings where name=?", param("folio"));
+    		@res = ExecSQL($dbuser, $dbpasswd, "select * from stock_holdings where name=?", "ROW", param("folio"));
     	};
     } else {
     	eval {
@@ -293,7 +308,7 @@ if ( $action eq "login" ) {
     	my $out = "";
     	foreach my $result (@res) {
 			my ( $id, $name, $username, $cashacct, $stocks ) = @{$result};
-			$out .= "\t<dt>" . $name . "</dt>\n\t<dd>0</dd>";
+			$out .= "\t<dt><a href=\"index.pl?act=portfoliolist&folio=" . $id . "\">" . $name . "</a></dt>\n\t<dd>0</dd>";
     	}
     	$template->param(PORTFOLIO_LISTING => $out);
     }
@@ -326,7 +341,7 @@ if ( $action eq "login" ) {
 		$template->param(CASH_VIEW => 1);
 		my @acctinfo;
 		eval {
-			@acctinfo = ExecSQL($dbuser, $dbpasswd, "select * from cashaccts where id=?", "ROW", param("id"));
+			@acctinfo = ExecSQL($dbuser, $dbpasswd, "select * from cashaccts where accountname=?", "ROW", param("id"));
 		};
 		$template->param(ACCTNAME => $acctinfo[1]);
 		$template->param(ACCTVAL => $acctinfo[2]);
@@ -335,13 +350,16 @@ if ( $action eq "login" ) {
 	
 		if (param('withdrawrun')) { 
 			my $withdraw = param('withdrawamt');
-    		my $error = WithdrawCash($acctinfo[1], 'WITH', $withdraw);
-    		if ($error) { 
+			if ($withdraw <= $acctinfo[2]) {
+    			my $error = WithdrawCash($acctinfo[1], 'WITH', $withdraw);
+    			if ($error) { 
+					$template->param(WITHDRAWNOTOK => 1);
+    			} else {
+					$template->param(WITHDRAWOK => 1);
+    			}
+			} else {
 				$template->param(WITHDRAWNOTOK => 1);
-    		} else {
-				$template->param(WITHDRAWOK => 1);
-    		}
-		
+			}
 		} elsif (param('depositrun')) { 
 			my $deposit = param('depositamt');
 		    my $error = DepositCash($acctinfo[1], 'DEPO', $deposit);
@@ -666,4 +684,38 @@ sub WithdrawCash {
 		 ExecSQL($dbuser,$dbpasswd,
 		 "insert into transactions (id,cashacct,transtype,foramt,madeby,transtime) values (transaction_id.nextval, ?,?,?,?,?)","ROW", $accname, $transtype, $deposit, $user, time());};
   return $@;
+}
+
+sub CheckData {
+	my ( $symbol ) = @_;
+	my $mysqldbh = DBI->connect("dbi:mysql:database=cs339;host=$host", "cs339", "cs339")
+					or die $DBI::errstr;
+	my @res;
+	eval {
+		@res = ExecSQL($dbuser, $dbpasswd, "select distinct count(*), max(day) from newstocksdaily where symbol=?","ROW",$symbol);
+	};
+	if ($res[0] == 0 || $res[1] <= parsedate("last week")) {
+		my $lastopenclose = $mysqldbh->prepare("select open, close from stocksdaily where symbol='" . $symbol . "' and date=" . parsedate("yesterday") . "") or die $DBI::errstr;
+		my $stats = $mysqldbh->prepare("select min(close), max(close) from stocksdaily where symbol='" . $symbol . "' and date>=" . parsedate("last week") . " and date <= " . parsedate("today") . "") or die $DBI::errstr;
+		$lastopenclose->execute();
+		$stats->execute();
+		my @err;
+		my @openclose = $lastopenclose->fetchrow_array;
+		my $lastopen = $openclose[0];
+		my $lastclose = $openclose[1];
+		my @statblock = $stats->fetchrow_array;
+		print @openclose;
+		print @statblock;
+		my $min = $statblock[0];
+		my $max = $statblock[1];
+		if ($res[0] == 0) {
+			eval {
+				@err = ExecSQL($dbuser, $dbpasswd, "insert into newstocksdaily(symbol, day, open, close, low, high) values(" . $symbol . ", " . time() . ", " . $lastopen . ", " . $lastclose . ", " . $min . ", " . $max .")");
+			};
+		} else {
+			eval {
+				@err = ExecSQL($dbuser, $dbpasswd, "update newstocksdaily set(symbol, day, open, close, low, high) = (" . $symbol . ", " . time() . ", " . $lastopen . ", " . $lastclose . ", " . $min . ", " . $max .")");
+			};
+		}
+	}
 }

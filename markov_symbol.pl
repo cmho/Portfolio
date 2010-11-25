@@ -8,7 +8,7 @@ $#ARGV==2 or die "usage: markov_symbol.pl [--simple] symbol levels order \n";
 
 ($symbol,$levels,$order)=@ARGV;
 
-@output=`get_data.pl --nodate --close $symbol | stepify.pl $levels | markov_online.pl $order | eval_pred.pl`;
+@output=`perl get_data.pl --nodate --close $symbol | perl stepify.pl $levels | perl markov_online.pl $order | perl eval_pred.pl`;
 
 if ($simple) {
   $output[3]=~/(\d+)/;
